@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>一般自我效能感量表(GSES)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .intro {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .options {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro">
+        <h1>一般自我效能感量表(GSES)</h1>
+        <p>指导语：以下10个句子关于你平时对你自己的一般看法，请你根据你的实际情况（实际感受）选择合适的选项。答案没有对错之分，对每一个句子无须多考虑。</p>
+    </div>
+
+    <div id="questionnaire"></div>
+    <button type="button" onclick="gsesScale.calculate()">提交评估</button>
+    <div id="result"></div>
+
+    <script>
+        class GSESScale {
+            constructor() {
+                this.questions = [
+                    "如果我尽力去做的话，我总是能够解决问题的",
+                    "即使别人反对我，我仍有办法取得我所要的",
+                    "对我来说，坚持理想和达成目标是轻而易举的",
+                    "我自信能有效地应付任何突如其来的事情",
+                    "以我的才智，我定能应付意料之外的情况",
+                    "如果我付出必要的努力，我一定能解决大多数的难题",
+                    "我能冷静地面对困难，因为我信赖自己处理问题的能力",
+                    "面对一个难题时，我通常能找到几个解决方法",
+                    "有麻烦的时候，我通常能想到一些应付的方法",
+                    "无论什么事在我身上发生，我都能应付自如"
+                ];
+                
+                this.options = [
+                    "完全不正确",
+                    "有点正确",
+                    "多数正确",
+                    "完全正确"
+                ];
+                
+                this.init();
+            }
+
+            init() {
+                const container = document.getElementById('questionnaire');
+                container.innerHTML = this.generateQuestions();
+            }
+
+            generateQuestions() {
+                return this.questions.map((question, index) => `
+                    <div class="question">
+                        <p>${index + 1}. ${question}</p>
+                        <div class="options">
+                            ${this.generateOptions(index + 1)}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            generateOptions(questionNum) {
+                return this.options.map((option, index) => `
+                    <label>
+                        <input type="radio" name="q${questionNum}" value="${index + 1}">
+                        ${option}
+                    </label>
+                `).join('');
+            }
+
+            calculate() {
+                const answers = {};
+                for(let i = 1; i <= this.questions.length; i++) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if(selected) {
+                        answers[i] = parseInt(selected.value);
+                    }
+                }
+
+                if(Object.keys(answers).length !== this.questions.length) {
+                    alert("请回答所有问题！");
+                    return;
+                }
+
+                const totalScore = Object.values(answers).reduce((a, b) => a + b, 0);
+                const averageScore = totalScore / this.questions.length;
+                this.displayResult(totalScore, averageScore);
+            }
+
+            displayResult(totalScore, averageScore) {
+                let interpretation = "";
+                if(averageScore < 2.0) {
+                    interpretation = "您的自我效能感较低，建议多培养自信心。";
+                } else if(averageScore < 2.86) {
+                    interpretation = "您的自我效能感处于一般水平。";
+                } else {
+                    interpretation = "您具有较高的自我效能感。";
+                }
+
+                const result = document.getElementById('result');
+                result.innerHTML = `
+                    <h3>评估结果</h3>
+                    <p>总分：${totalScore}</p>
+                    <p>平均分：${averageScore.toFixed(2)}</p>
+                    <p>结果解释：${interpretation}</p>
+                    <p>参考标准：</p>
+                    <ul>
+                        <li>国际平均水平为2.86分</li>
+                        <li>中国大学生平均水平：男生2.69分，女生2.55分</li>
+                        <li>中国高中生平均水平：男生2.52分，女生2.39分</li>
+                    </ul>
+                `;
+            }
+        }
+
+        // 初始化量表
+        const gsesScale = new GSESScale();
+    </script>
+</body>
+</html>

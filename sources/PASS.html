@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>领悟社会支持量表(PSSS)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .intro {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .options {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro">
+        <h1>领悟社会支持量表(PSSS)</h1>
+        <p>指导语：以下12个句子，每一个句子后面各有7个答案。请你根据自己的实际情况在每句后面选择一个答案。</p>
+    </div>
+
+    <div id="questionnaire"></div>
+    <button type="button" onclick="psssScale.calculate()">提交评估</button>
+    <div id="result"></div>
+
+    <script>
+        class PSSSScale {
+            constructor() {
+                this.questions = [
+                    "在我遇到问题时有些人(领导、亲戚、同事）会出现在我的身旁",
+                    "我能够与有些人（领导、亲戚、同事）共享快乐与忧伤",
+                    "我的家庭能够切实具体地给我帮助",
+                    "在需要时我能够从家庭获得感情上的帮助和支持",
+                    "当我有困难时有些人（领导、亲戚、同事)是安慰我的真正源泉",
+                    "我的朋友们能真正的帮助我",
+                    "在发生困难时我可以依靠我的朋友们",
+                    "我能与自己的家庭谈论我的难题",
+                    "我的朋友们能与我分享快乐与忧伤",
+                    "在我的生活中有些人（领导、亲戚、同事）关心着我的感情",
+                    "我的家庭能心甘情愿协助我作出各种决定",
+                    "我能与朋友们讨论自己的难题"
+                ];
+                
+                this.options = [
+                    "极不同意",
+                    "很不同意",
+                    "稍不同意",
+                    "中立",
+                    "稍同意",
+                    "很同意",
+                    "极同意"
+                ];
+                
+                this.init();
+            }
+
+            init() {
+                const container = document.getElementById('questionnaire');
+                container.innerHTML = this.generateQuestions();
+            }
+
+            generateQuestions() {
+                return this.questions.map((question, index) => `
+                    <div class="question">
+                        <p>${index + 1}. ${question}</p>
+                        <div class="options">
+                            ${this.generateOptions(index + 1)}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            generateOptions(questionNum) {
+                return this.options.map((option, index) => `
+                    <label>
+                        <input type="radio" name="q${questionNum}" value="${index + 1}">
+                        ${option}
+                    </label>
+                `).join('');
+            }
+
+            calculate() {
+                const answers = {};
+                for(let i = 1; i <= this.questions.length; i++) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if(selected) {
+                        answers[i] = parseInt(selected.value);
+                    }
+                }
+
+                if(Object.keys(answers).length !== this.questions.length) {
+                    alert("请回答所有问题！");
+                    return;
+                }
+
+                const totalScore = Object.values(answers).reduce((a, b) => a + b, 0);
+                this.displayResult(totalScore);
+            }
+
+            displayResult(score) {
+                let interpretation = "";
+                if(score < 32) {
+                    interpretation = "你的社会支持系统存在严重的问题，可能和你的个性有关。";
+                } else if(score < 50) {
+                    interpretation = "你的社会支持存在一定问题,但不是很严重。";
+                } else {
+                    interpretation = "你拥有良好的社会支持系统。";
+                }
+
+                const result = document.getElementById('result');
+                result.innerHTML = `
+                    <h3>评估结果</h3>
+                    <p>总分：${score}</p>
+                    <p>结果解释：${interpretation}</p>
+                `;
+            }
+        }
+
+        // 初始化量表
+        const psssScale = new PSSSScale();
+    </script>
+</body>
+</html>

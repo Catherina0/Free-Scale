@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>人格诊断问卷(PDQ-4+)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .intro {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .options {
+            display: flex;
+            gap: 30px;
+            margin-top: 10px;
+        }
+        .options label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .options input[type="radio"] {
+            margin: 0;
+        }
+        .subquestions {
+            margin-left: 30px;
+            padding: 10px;
+            border-left: 3px solid #4CAF50;
+            background-color: #f9f9f9;
+        }
+        .sub-question {
+            margin: 10px 0;
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+        }
+        .personality-type {
+            margin: 10px 0;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro">
+        <h1>人格诊断问卷(PDQ-4+)</h1>
+        <p>本问卷的目的是让您描述自己是那种性格的人，在回答问题时，想想在过去的几年里您主要的感觉、思想和行为。</p>
+        <p>"是"的意思是此描述一般来说对您合适，"否"的意思是此描述一般来说对您不合适。即使您对答案不完全肯定，您也要选择"是"或"否"，每题只选一个答案，不要漏选。</p>
+    </div>
+
+    <div id="questionnaire"></div>
+    <button type="button" onclick="pdqScale.calculate()">提交评估</button>
+    <div id="result"></div>
+
+    <script>
+        class PDQQuestion {
+            constructor(id, text, type = 'normal') {
+                this.id = id;
+                this.text = text;
+                this.type = type;
+            }
+
+            generateHTML() {
+                return `
+                    <div class="question">
+                        <p>${this.id}. ${this.text}</p>
+                        <div class="options">
+                            <label><input type="radio" name="q${this.id}" value="1">是</label>
+                            <label><input type="radio" name="q${this.id}" value="0">否</label>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        class PDQSpecialQuestion extends PDQQuestion {
+            constructor(id, text, subQuestions, threshold) {
+                super(id, text, 'special');
+                this.subQuestions = subQuestions;
+                this.threshold = threshold;
+            }
+
+            generateHTML() {
+                return `
+                    <div class="question">
+                        <p>${this.id}. ${this.text}</p>
+                        <div class="subquestions">
+                            ${this.subQuestions.map((subQ, index) => `
+                                <div class="sub-question">
+                                    <p>${String.fromCharCode(97 + index)}) ${subQ}</p>
+                                    <div class="options">
+                                        <label><input type="radio" name="q${this.id}_${index}" value="1">是</label>
+                                        <label><input type="radio" name="q${this.id}_${index}" value="0">否</label>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        class PDQScale {
+            constructor() {
+                this.questions = this.initializeQuestions();
+                this.init();
+            }
+
+            initializeQuestions() {
+                const questionTexts = [
+                    "我尽量避免与可能批评我的人一块工作",
+                    "没有得到别人的建议和再三宽心，我难以作出决定",
+                    "我常常将功夫花在细节上而忽略了大目标",
+                    "我希望能引人注目",
+                    "我所作出的成绩远比别人所认为的要多",
+                    "为了使我所爱的人不离开我，我会走极端",
+                    "别人抱怨我没有能够完成我的工作任务和所承诺的事情",
+                    "我曾几次遇到过法律上的麻烦（或如果我当时被抓住，我将会有这类麻烦）",
+                    "与家人或朋友一起消磨时间并不使我感到有趣",
+                    "我从周围所发生的事中接受到特殊的信息",
+                    "我知道如果我任别人怎样待我，他们将会从我身上乘机得利或试图欺骗我",
+                    "我有时心情不好",
+                    "只有当我确信对方喜欢我，我才会与他们交朋友",
+                    "我通常心情抑郁",
+                    "我让我的家人和朋友为我生活中的重要事情作出决定",
+                    "我做事过份追求完美，因此花费不少时间",
+                    "我比一般人对于异性更具有吸引力",
+                    "我经常发现自己在想我是一个怎样重要的人，或将会成为这样的人",
+                    "我要么喜欢和佩服某人，要么怨恨他们，没有介于两者之间的感受",
+                    "我与别人打过许多次架",
+                    "我觉得别人并不理解和赏识我",
+                    "我宁可独自工作而不愿与他人一块工作",
+                    "我能够在一些事情发生之前便知道他们会要发生",
+                    "我常常寻思我所认识的人是否真正信得过",
+                    "我偶尔在背后议论别人",
+                    "由于我不受到别人的奚落或取笑而在与我有亲密关系的人面前压抑自己的情感",
+                    "我担心如果我表示与别人不一致的看法，便会失去他们的支持实施",
+                    "我为自卑感而苦恼",
+                    "我将工作置于与家人或朋友相聚或娱乐之前",
+                    "我容易显露出自己的情绪",
+                    "只有某些特别的人才能真正赏识和理解我",
+                    "我常想弄清自己究竟是何人",
+                    "我常缺勤，也比我所认识到大多数人更多的调换工作",
+                    "性方面的事不能引起我的兴趣",
+                    "别人认为我心情易变及脾气暴躁",
+                    "我常能觉察和感受别人感受不到的事情",
+                    "别人会把我向他们所说的话当作将来使我处于不利的把柄",
+                    "有一些人我不怎么喜欢",
+                    "我比大多数人对于批评或拒绝更敏感",
+                    "一旦事情需要我独自去干，我便感到难以开展",
+                    "我比别人有更强的道德观念",
+                    "我是我自己最严厉的批评者",
+                    "我用自己外貌来得到我所需要的注意",
+                    "我很需要别人注意我或称赞我",
+                    "我曾试过伤害自己或自杀",
+                    "我做过很多不考虑后果的事情",
+                    "很少有什么活动能够使我感兴趣",
+                    "人们常常难以理解我谈话中的内容",
+                    "我不喜欢上级交待我应该怎样干活的工作",
+                    "我时常留意与捉摸别人话中所隐含的意思",
+                    "我从未说过一次谎",
+                    "我害怕陌生人，因为那会使我感到不自在",
+                    "我很需要别人喜欢我，以致为此作出许多我不情愿做的事情",
+                    "我积累了不少我不再需要而又不忍心扔掉的东西",
+                    "我虽然说得很多，但别人说我难以抓住要点",
+                    "我有很多的忧虑",
+                    "当店员或营业员使我在柜台前和排队等待较长时间，我容易感到受到怠慢而生气",
+                    "我是一个情绪不稳定的人",
+                    "对我来说说谎很容易，我常常这样做",
+                    "我对于拥有亲密朋友没有什么兴趣",
+                    "我常常保持警惕以防被别人乘机利用",
+                    "我不会忘记和原谅那些待我不好的人",
+                    "我对那些比我“走运”的人感到不满",
+                    "核战争也许不是一个那么坏的想法",
+                    "我会在独处时感到无能为力和无法照顾自己",
+                    "我常常不愿与他人合作或将事情托付给别人干，只是因为我不放心他们是否真正会按我的要求和方式去干",
+                    "我有一种表演天赋",
+                    "有些人认为我利用别人",
+                    "我觉得我的生活乏味",
+                    "我对周围的人甚为挑剔与苛求",
+                    "我不在乎别人会怎么说我",
+                    "我难以在一种只有两人的场合单独与对方打交道",
+                    "人们常怪我没能意识到他们心情不好",
+                    "我看上去可能会使别人认为我有些古怪和离奇",
+                    "我喜欢干冒险的事",
+                    "我在回答了这份问卷时说了不少谎",
+                    "我诉说许多我的苦楚和不幸",
+                    "我难以控制恼怒或脾气",
+                    "有的人嫉妒我",
+                    "我易受别人的影响",
+                    "我认为自己节约，而别人认为我吝啬",
+                    "一旦我与别人的亲密关系终止，我便需要很快与其他人建立起这种关系",
+                    "我为自卑感而苦恼",
+                    "我是一个悲观的人",
+                    "当别人中伤我时，我毫不犹豫给予还击",
+                    "别人围在我身旁会使我感到紧张不安",
+                    "在没有经历过的新场合，我害怕自己会发窘",
+                    "我时常很害怕别人会离开我而让我自己照顾自己的一切事情",
+                    "人们说我相当固执",
+                    "与跟我交往的人相比，我总是很快变成与别人建立起亲密关系",
+                    "我能在对别人发火之后很快向他们道歉",
+                    "别人觉得我傲慢",
+                    "遇到紧张的事情时，我会变得敏感多疑或记不起刚刚发生过的事情",
+                    "只要我能得到我所需要的，我不会在乎别人会受到什么伤害",
+                    "我与别人保持相当的距离",
+                    "我常想弄明白我的妻子（丈夫.女朋友或男朋友）是否有过不忠实的行为",
+                    "我常有内疚感",
+                    "我回避做许多我应做但需人际接触的事情，因为我害怕会得不到别人的赞许或遭到拒绝与批评",
+                    "必须承认，我做事时总是要花许多时间考虑细节.规则或程序以至于我感到难以象别人那样迅速和有效地完成事情",
+                    "一旦我发现与我关系亲密的人不再接近我，我便会感到十分烦恼并作出各种强烈的反应",
+                    "我与别人的关系有时变得很亲密，有时则变得充满怨恨",
+                    "我在表达自己的感受和情绪时比一般人更为兴奋和强烈",
+                    "我常常禁不住要对我周围人们的一些毛病作些否定性的评价",
+                    "我无论对别人还是对自己都很注意节省，尽管有人会认为我很吝惜",
+                    "我习惯于按自己的方式行事，难以因别人的建议而改变，即使是这些建议看来很有道理",
+                ];
+
+                const questions = [];
+                
+                // 常规题目 1-105
+                for(let i = 0; i < 105; i++) {
+                    questions.push(new PDQQuestion(i + 1, questionTexts[i]));
+                }
+
+                // 特殊题目 106 和 107 保持不变
+                questions.push(new PDQSpecialQuestion(
+                    106,
+                    "我凭一时冲动干过一些以下的事情以至给我带来麻烦",
+                    [
+                        "花费的金钱超前了我自己所容有的数额",
+                        "与我不熟悉的人发生性关系",
+                        "喝酒过多",
+                        "服用成瘾药物",
+                        "无节制的大吃",
+                        "莽撞骑车或驾驶"
+                    ],
+                    2
+                ));
+
+                questions.push(new PDQSpecialQuestion(
+                    107,
+                    "我小时候（15岁以前）干过以下某些事情",
+                    [
+                        "我被认为是一个霸道的人",
+                        "我曾先动手打别的小孩",
+                        "我曾用我手头的武器打架",
+                        "我曾对别人进行抢劫",
+                        "我曾对别人进行身体上的虐待",
+                        "我曾虐待动物",
+                        "我曾强迫别人与我发生性关系",
+                        "我曾多次说慌",
+                        "我曾没经父母的允许而在外面过夜",
+                        "我偷过别人的东西",
+                        "我纵过火",
+                        "我曾打破窗户或捣坏财物",
+                        "我曾不止一次离家在外过夜",
+                        "我在13岁之前经常逃学",
+                        "我曾撬门窗而入别人的家，房子或汽车"
+                    ],
+                    3
+                ));
+
+                return questions;
+            }
+
+            init() {
+                const container = document.getElementById('questionnaire');
+                container.innerHTML = this.generateQuestionnaire();
+            }
+
+            generateQuestionnaire() {
+                return this.questions.map(question => question.generateHTML()).join('');
+            }
+
+            calculateSpecialQuestionScore(questionId, answers) {
+                const question = this.questions.find(q => q.id === questionId);
+                if (!question || question.type !== 'special') return 0;
+
+                const subAnswers = question.subQuestions.map((_, index) => 
+                    answers[`q${questionId}_${index}`] || 0
+                );
+                
+                const positiveCount = subAnswers.reduce((sum, val) => sum + parseInt(val), 0);
+                return positiveCount >= question.threshold ? 1 : 0;
+            }
+
+            calculate() {
+                const answers = this.collectAnswers();
+                if (!this.validateAnswers(answers)) {
+                    alert("请回答所有问题！");
+                    return;
+                }
+
+                // 处理特殊题目
+                answers.q106 = this.calculateSpecialQuestionScore(106, answers);
+                answers.q107 = this.calculateSpecialQuestionScore(107, answers);
+
+                const scores = this.calculateScores(answers);
+                this.displayResult(scores);
+            }
+
+            calculateScores(answers) {
+                const scores = {
+                    paranoid: this.calculateTypeScore([11,24,37,50,62,85,96], answers),
+                    schizoid: this.calculateTypeScore([9,22,34,47,60,71,95], answers),
+                    schizotypal: this.calculateTypeScore([10,23,36,48,60,61,72,74,86], answers),
+                    antisocial: this.calculateTypeScore([8,20,33,46,59,75,94,107], answers),
+                    borderline: this.calculateTypeScore([6,19,32,45,58,69,78,93,106], answers),
+                    histrionic: this.calculateTypeScore([4,17,30,43,55,67,80,90], answers),
+                    narcissistic: this.calculateTypeScore([5,18,31,44,57,68,73,79,92,103], answers),
+                    avoidant: this.calculateTypeScore([1,13,26,39,52,83,87,98], answers),
+                    dependent: this.calculateTypeScore([2,15,27,40,53,65,82,88], answers),
+                    obsessive: this.calculateTypeScore([3,16,29,41,54,66,81,89,99,104,105], answers),
+                    passiveAggressive: this.calculateTypeScore([7,21,35,49,63,77,91], answers),
+                    depressive: this.calculateTypeScore([14,28,42,56,70,84,97], answers),
+                    concealment: this.calculateConcealmentScore(answers)
+                };
+                return scores;
+            }
+
+            calculateTypeScore(items, answers) {
+                return items.reduce((sum, item) => sum + (answers[item] || 0), 0);
+            }
+
+            calculateConcealmentScore(answers) {
+                const items = [12, 25, 38, 51];
+                return items.reduce((sum, item) => {
+                    if(item === 51) {
+                        return sum + (answers[item] || 0);
+                    } else {
+                        return sum + (1 - (answers[item] || 0));
+                    }
+                }, 0);
+            }
+
+            displayResult(scores) {
+                const thresholds = {
+                    paranoid: 4,
+                    schizoid: 4,
+                    schizotypal: 5,
+                    antisocial: 3,
+                    borderline: 5,
+                    histrionic: 5,
+                    narcissistic: 5,
+                    avoidant: 4,
+                    dependent: 5,
+                    obsessive: 4,
+                    passiveAggressive: 4,
+                    depressive: 5
+                };
+
+                let html = '<h3>评估结果</h3>';
+                
+                for(let type in thresholds) {
+                    const score = scores[type];
+                    const threshold = thresholds[type];
+                    const isPositive = score >= threshold;
+                    
+                    html += `
+                        <div class="personality-type">
+                            <h4>${this.getTypeName(type)}</h4>
+                            <p>得分：${score} (临界值：${threshold})</p>
+                            <p>结果：${isPositive ? '阳性' : '阴性'}</p>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="personality-type">
+                        <h4>掩饰量表</h4>
+                        <p>得分：${scores.concealment}</p>
+                    </div>
+                `;
+
+                document.getElementById('result').innerHTML = html;
+            }
+
+            getTypeName(type) {
+                const names = {
+                    paranoid: "偏执型",
+                    schizoid: "分裂样",
+                    schizotypal: "分裂型",
+                    antisocial: "反社会型",
+                    borderline: "边缘型",
+                    histrionic: "表演型",
+                    narcissistic: "自恋型",
+                    avoidant: "回避型",
+                    dependent: "依赖型",
+                    obsessive: "强迫型",
+                    passiveAggressive: "被动攻击型",
+                    depressive: "抑郁型"
+                };
+                return names[type] || type;
+            }
+
+            collectAnswers() {
+                const answers = {};
+                for(let i = 1; i <= this.questions.length; i++) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if(selected) {
+                        answers[i] = parseInt(selected.value);
+                    }
+                }
+                return answers;
+            }
+
+            validateAnswers(answers) {
+                const expectedCount = this.questions.length;
+                const actualCount = Object.keys(answers).length;
+                return actualCount === expectedCount;
+            }
+        }
+
+        // 初始化量表
+        const pdqScale = new PDQScale();
+    </script>
+</body>
+</html>

@@ -1,178 +1,66 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>分离体验量表(DES-II)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猫猫随手做的FREE-QUIZ</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-        }
-        .intro {
             background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .quiz-list {
+            list-style: none;
+            padding: 0;
+        }
+        .quiz-item {
+            margin: 15px 0;
+        }
+        .quiz-link {
+            display: block;
             padding: 15px;
-            margin-bottom: 20px;
-        }
-        .question {
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
-        .options {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        button {
-            padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
-            border: none;
-            cursor: pointer;
-            margin-top: 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
         }
-        #result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f0f0f0;
+        .quiz-link:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
-    <div class="intro">
-        <h1>分离体验量表(DES-II)</h1>
-        <p>指导语：该问卷包含28个与您在日常生活中可能出现的体验有关的问题。</p>
+    <div class="container">
+        <h1>猫猫随手做的FREE-QUIZ</h1>
+        <h2>Stars Plz</h2>
+        <ul class="quiz-list">
+            <li class="quiz-item">
+                <a href="sources/DES_II.html" class="quiz-link">分离体验量表（DES-II）</a>
+            </li>
+            <li class="quiz-item">
+                <a href="sources/GSES.html" class="quiz-link">一般自我效能感量表（GSES）</a>
+            </li>
+            <li class="quiz-item">
+                <a href="sources/PASS.html" class="quiz-link">领悟社会支持量表（PASS）</a>
+            </li>
+            <li class="quiz-item">
+                <a href="sources/PDQ4.html" class="quiz-link">人格诊断问卷（PDQ-4+）</a>
+            </li>
+        </ul>
     </div>
-
-    <div id="questionnaire"></div>
-    <button type="button" onclick="desScale.calculate()">提交评估</button>
-    <div id="result"></div>
-
-    <script>
-        class DESScale {
-            constructor() {
-                this.questions = [
-                    "有些人有这样的体验，他们骑着自行车(或开车)走着，突然意识到，怎么自己一点儿也想不起来在整个或部分的行驶过程中发生了什么。",
-                    "有些人有时正在听某人说话时突然意识到，自己对刚才所谈内容的全部或者部分好像什么也没听见。",
-                    "有些人有这样的体验，他们突然发现自己到了某个地方，却不知道怎么来的。",
-                    "有些人有这样的体验，他们注意到自己身上所穿的衣服，却想不起来自己是怎么穿上这身衣服的。",
-                    "有些人有这样的体验，他们在自己的东西中发现了新的物品，可是这个物品是怎么来的，却回忆不起来。",
-                    "有些人有这样的体验，他们并不认识的人朝他们走来，他们却用另外的名字向这些人打招呼或者自称认识这些人。",
-                    "有些人有时有这样的感觉，觉得自己像是站在自己旁边，或者看着自己正在干着什么。有时他们会由此产生一种正在看着一个陌生人的印象。",
-                    "有些人被说成是，他们认不出自己的朋友或家人了。",
-                    "有些人不记得他们生活中的重要事件了。(例如:婚礼或者毕业典礼。)",
-                    "有些人自己感觉自己肯定没有撒谎，但别人却责备他们在撤谎。",
-                    "有些人在照镜子的时候认不出自己了。",
-                    "有些人有这样的体验，他们觉得周围的其他人、物和世界不真实。",
-                    "有些人有这样的感觉，就好像他们的身体不属于他们自己了。",
-                    "有些人在回忆一件早先经历过的事情时有时会产生很强烈的体验，就好像再次经历了这一生活事件似的。",
-                    "有些人有时分不清，有些事情是自己真的经历过，还是自己做的梦。",
-                    "有些人有时感觉一个自己熟悉的地方变得陌生和不熟悉。",
-                    "有些人有这样的体验，当他们看电影太投入时，就感觉不到周围其他事物的存在了。",
-                    "有些人在幻想和做白日梦的时候感觉特别强烈，以至于觉得那些就像是真的一样。",
-                    "有些人有这样的体验，他们有时候能够感觉不到疼痛。",
-                    "有些人有时就呆呆地坐在那儿，既没想任何事情，也感觉不到时间的流逝。",
-                    "有些人在独处时出声地跟自己说话。",
-                    "有些人发现，他们在不同场合的举止差别很大，以至于感觉自己就象两个人。",
-                    "有些人有这样的体验，一些平时感到困难的事情却在特定的情景下能够轻松、自如地完成(如:运动、工作、应对公众场合)。",
-                    "有些人有时记不清，某件事情是他们已经做了、还是他们只是想过要去做(如:把一封信投入信箱或者只是想着要投)。",
-                    "有些人会从自己身边的一些现象上发现，自己一定是做了些什么.但对此自己却一点儿印象也没有。",
-                    "有些人有时候在自己的物品中发现小纸片、图画或者笔记，这些肯定出自自己的手笔，但却怎么也想不起来自己是怎么完成的。",
-                    "有些人有时听到自己头脑中有一个声音，这个声音会指示他们应该做什么，或者对自己刚做过的事情加以评论。",
-                    "有些人有时感觉自己好像是在透过一层雾在感知着这个世界，所以其他人或物好像离自己很远或者不太清晰。",
-                ];
-                
-                this.depersonalizationItems = [7,12,13,24,28];
-                this.pathologicalItems = [3,5,7,8,12,13,22,27];
-                
-                this.init();
-            }
-
-            init() {
-                const container = document.getElementById('questionnaire');
-                container.innerHTML = this.generateQuestions();
-            }
-
-            generateQuestions() {
-                return this.questions.map((question, index) => `
-                    <div class="question">
-                        <p>${index + 1}. ${question}</p>
-                        <div class="options">
-                            ${this.generateOptions(index + 1)}
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            generateOptions(questionNum) {
-                return Array.from({length: 11}, (_, i) => i * 10).map(value => `
-                    <label>
-                        <input type="radio" name="q${questionNum}" value="${value}">
-                        ${value}%
-                    </label>
-                `).join('');
-            }
-
-            getAnswers() {
-                const answers = {};
-                for(let i = 1; i <= this.questions.length; i++) {
-                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
-                    if(selected) {
-                        answers[i] = parseInt(selected.value);
-                    }
-                }
-                return answers;
-            }
-
-            calculateSpecificScore(items) {
-                const answers = this.getAnswers();
-                const scores = items.map(item => answers[item] || 0);
-                return scores.reduce((a, b) => a + b, 0) / items.length;
-            }
-
-            calculate() {
-                const answers = this.getAnswers();
-                
-                // 检查是否所有题目都已回答
-                if(Object.keys(answers).length !== this.questions.length) {
-                    alert("请回答所有问题！");
-                    return;
-                }
-
-                const totalScore = Object.values(answers).reduce((a, b) => a + b, 0);
-                const averageScore = totalScore / this.questions.length;
-                const depersonalizationScore = this.calculateSpecificScore(this.depersonalizationItems);
-                const pathologicalScore = this.calculateSpecificScore(this.pathologicalItems);
-
-                this.displayResult({
-                    total: totalScore,
-                    average: averageScore,
-                    depersonalization: depersonalizationScore,
-                    pathological: pathologicalScore
-                });
-            }
-
-            displayResult(scores) {
-                const result = document.getElementById('result');
-                result.innerHTML = `
-                    <h3>评估结果</h3>
-                    <p>DES总分：${scores.total}</p>
-                    <p>平均分：${scores.average.toFixed(2)}</p>
-                    <p>人格解体得分：${scores.depersonalization.toFixed(2)}</p>
-                    <p>病理性分离得分：${scores.pathological.toFixed(2)}</p>
-                    <p>结果解释：</p>
-                    <ul>
-                        <li>DES平均分≥30分提示可能存在病理性分离</li>
-                        <li>正常人群的平均分通常在10分以下</li>
-                    </ul>
-                `;
-            }
-        }
-
-        // 初始化量表
-        const desScale = new DESScale();
-    </script>
 </body>
 </html>
