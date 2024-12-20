@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>明尼苏达多相人格测验(MMPI)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .intro {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+        .options {
+            display: flex;
+            gap: 20px;
+            margin-top: 5px;
+        }
+        .options label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+        }
+        .user-info {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+        .user-info label {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+        .user-info input, .user-info select {
+            padding: 5px;
+            margin-left: 5px;
+        }
+        .questions-container {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="test-container">
+        <div class="intro">
+            <h1>明尼苏达多相人格测验(MMPI)</h1>
+            <p>指导语：这是一份个性测验问卷，包含566个问题。请根据你的真实情况回答"是"或"否"。</p>
+        </div>
+
+        <div class="user-info">
+            <label>性别: 
+                <select id="gender" required>
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                </select>
+            </label>
+            <label>年龄: <input type="number" id="age" min="13" max="70" required></label>
+        </div>
+
+        <div class="questions-container" id="questions-container"></div>
+        
+        <button onclick="mmpiTest.calculateResults()">提交测试</button>
+        <div id="result"></div>
+    </div>
+
+    <script src="questions.js"></script>
+    <script>
+        class MMPITest {
+            constructor() {
+                console.log('初始化 MMPITest...');
+                // 检查 MMPI 对象是否存在
+                if (typeof MMPI === 'undefined') {
+                    console.error('MMPI 对象未定义，请确保 questions.js 已正确加载');
+                    return;
+                }
+                console.log('MMPI 数据:', MMPI);
+                
+                this.questions = MMPI.questions;
+                this.scoringRules = MMPI.scoringRules;
+                this.init();
+            }
+
+            init() {
+                console.log('开始生成问题...');
+                const container = document.getElementById('questions-container');
+                if (!container) {
+                    console.error('找不到 questions-container 元素');
+                    return;
+                }
+                container.innerHTML = this.generateQuestions();
+                console.log('问题生成完成');
+            }
+
+            generateQuestions() {
+                console.log('生成问题HTML...');
+                return Object.entries(this.questions)
+                    .map(([num, question]) => `
+                        <div class="question">
+                            <p>${num}. ${question}</p>
+                            <div class="options">
+                                <label>
+                                    <input type="radio" name="q${num}" value="1">是
+                                </label>
+                                <label>
+                                    <input type="radio" name="q${num}" value="0">否
+                                </label>
+                            </div>
+                        </div>
+                    `).join('');
+            }
+
+            validateUserInfo() {
+                console.log('验证用户信息...');
+                const gender = document.getElementById('gender').value;
+                const age = parseInt(document.getElementById('age').value);
+
+                if (!age) {
+                    alert('请填写年龄');
+                    return false;
+                }
+
+                if (age < 13 || age > 70) {
+                    alert('年龄必须在13-70岁之间');
+                    return false;
+                }
+
+                console.log('用户信息有效:', { gender, age });
+                return { gender, age };
+            }
+
+            collectAnswers() {
+                console.log('收集答案...');
+                const answers = {};
+                let unanswered = [];
+
+                for (let i = 1; i <= 566; i++) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if (selected) {
+                        answers[i] = selected.value;
+                    } else {
+                        unanswered.push(i);
+                    }
+                }
+
+                console.log(`收集到 ${Object.keys(answers).length} 个答案`);
+                console.log(`${unanswered.length} 题未答`);
+
+                if (unanswered.length > 0) {
+                    const confirmContinue = confirm(`有${unanswered.length}道题未作答（题号：${unanswered.join(', ')}）\n是否继续提交？`);
+                    if (!confirmContinue) {
+                        return null;
+                    }
+                }
+
+                return answers;
+            }
+
+            calculateResults() {
+                console.log('开始计算结果...');
+                
+                const userInfo = this.validateUserInfo();
+                if (!userInfo) {
+                    console.error('用户信息验证失败');
+                    return;
+                }
+
+                const answers = this.collectAnswers();
+                if (!answers) {
+                    console.error('答案收集失败');
+                    return;
+                }
+
+                // 计算原始分
+                const rawScores = this.calculateRawScores(answers);
+                console.log('原始分计算完成:', rawScores);
+
+                // 计算T分数
+                const tScores = this.calculateTScores(rawScores, userInfo.gender);
+                console.log('T分数计算完成:', tScores);
+
+                // 显示结果
+                this.displayResults(rawScores, tScores, userInfo);
+            }
+
+            calculateRawScores(answers) {
+                console.log('计算原始分...');
+                const scores = {};
+
+                // 计算效度量表分数
+                ['L', 'F', 'K'].forEach(scale => {
+                    scores[scale] = this.calculateScaleScore('validity', scale, answers);
+                    console.log(`${scale} 量表原始分:`, scores[scale]);
+                });
+
+                // 计算临床量表分数
+                ['Hs', 'D', 'Hy', 'Pd', 'Mf', 'Pa', 'Pt', 'Sc', 'Ma', 'Si'].forEach(scale => {
+                    scores[scale] = this.calculateScaleScore('clinical', scale, answers);
+                    console.log(`${scale} 量表原始分:`, scores[scale]);
+                });
+
+                // 计算附加量表分数
+                ['Mas', 'Dy', 'Do', 'Re', 'Cn'].forEach(scale => {
+                    scores[scale] = this.calculateScaleScore('additional', scale, answers);
+                    console.log(`${scale} 量表原始分:`, scores[scale]);
+                });
+
+                // 计算K校正分数
+                const kScore = scores['K'] || 0;
+                const kCorrectionScales = {
+                    'Hs+0.5K': { baseScale: 'Hs', multiplier: 0.5 },
+                    'Pd+0.4K': { baseScale: 'Pd', multiplier: 0.4 },
+                    'Pt+1.0K': { baseScale: 'Pt', multiplier: 1.0 },
+                    'Sc+1.0K': { baseScale: 'Sc', multiplier: 1.0 },
+                    'Ma+0.2K': { baseScale: 'Ma', multiplier: 0.2 }
+                };
+
+                Object.entries(kCorrectionScales).forEach(([scaleName, rule]) => {
+                    const baseScore = scores[rule.baseScale] || 0;
+                    scores[scaleName] = baseScore + Math.round(kScore * rule.multiplier);
+                    console.log(`${scaleName} K校正分:`, scores[scaleName]);
+                });
+
+                scores['未答题数'] = 566 - Object.keys(answers).length;
+                return scores;
+            }
+
+            calculateTScores(rawScores, gender) {
+                console.log('计算T分数...');
+                const tScores = {};
+                const norms = this.scoringRules.norms[gender];
+
+                Object.entries(rawScores).forEach(([scale, raw]) => {
+                    if (norms[scale]) {
+                        const { mean, sd } = norms[scale];
+                        tScores[scale] = 50 + 10 * ((raw - mean) / sd);
+                        console.log(`${scale} T分数:`, tScores[scale]);
+                    }
+                });
+
+                return tScores;
+            }
+
+            calculateScaleScore(type, scale, answers) {
+                console.log(`计算 ${type} 类型的 ${scale} 量表分数...`);
+                console.log('使用的评分规则:', this.scoringRules);
+                
+                let rules;
+                if (type === 'validity') {
+                    rules = this.scoringRules[scale];
+                } else if (type === 'clinical') {
+                    rules = this.scoringRules.clinical[scale];
+                } else if (type === 'additional') {
+                    rules = this.scoringRules.additional[scale];
+                }
+
+                if (!rules) {
+                    console.warn(`未找到 ${type} 类型的 ${scale} 量表评分规则`);
+                    return 0;
+                }
+
+                let score = 0;
+
+                // 计算必须回答"是"的题目
+                if (rules.mustBeTrue) {
+                    rules.mustBeTrue.forEach(q => {
+                        if (answers[q] === '1') {
+                            score++;
+                            console.log(`题目 ${q} 答"是"，得1分`);
+                        }
+                    });
+                }
+
+                // 计算必须回答"否"的题目
+                if (rules.mustBeFalse) {
+                    rules.mustBeFalse.forEach(q => {
+                        if (answers[q] === '0') {
+                            score++;
+                            console.log(`题目 ${q} 答"否"，得1分`);
+                        }
+                    });
+                }
+
+                // 计算特殊配对题目（如果有）
+                if (rules.pairs) {
+                    rules.pairs.forEach(([q1, q2]) => {
+                        if (answers[q1] === answers[q2]) {
+                            score++;
+                            console.log(`配对题目 ${q1} 和 ${q2} 答案相同，得1分`);
+                        }
+                    });
+                }
+
+                console.log(`${scale} 量表最终得分:`, score);
+                return score;
+            }
+
+            displayResults(rawScores, tScores, userInfo) {
+                console.log('开始显示结果...');
+                const resultDiv = document.getElementById('result');
+                
+                // 定义所有量表及其中文名称
+                const scaleCategories = {
+                    '效度量表': [
+                        { key: 'L', name: '说谎量表' },
+                        { key: 'F', name: '诈病量表' },
+                        { key: 'K', name: '校正量表' }
+                    ],
+                    '临床量表': [
+                        { key: 'Hs', name: '疑病量表' },
+                        { key: 'D', name: '抑郁量表' },
+                        { key: 'Hy', name: '癔病量表' },
+                        { key: 'Pd', name: '精神病态量表' },
+                        { key: 'Mf', name: '男子气质-女子气质量表' },
+                        { key: 'Pa', name: '偏执量表' },
+                        { key: 'Pt', name: '精神衰弱量表' },
+                        { key: 'Sc', name: '精神分裂症量表' },
+                        { key: 'Ma', name: '轻躁狂量表' },
+                        { key: 'Si', name: '社会内向量表' }
+                    ],
+                    'K校正量表': [
+                        { key: 'Hs+0.5K', name: '疑病K校正' },
+                        { key: 'Pd+0.4K', name: '精神病态K校正' },
+                        { key: 'Pt+1.0K', name: '精神衰弱K校正' },
+                        { key: 'Sc+1.0K', name: '精神分裂症K校正' },
+                        { key: 'Ma+0.2K', name: '轻躁狂K校正' }
+                    ],
+                    '附加量表': [
+                        { key: 'Mas', name: '外显性焦虑' },
+                        { key: 'Dy', name: '依赖性' },
+                        { key: 'Do', name: '支配性' },
+                        { key: 'Re', name: '社会责任感' },
+                        { key: 'Cn', name: '控制' }
+                    ]
+                };
+
+                // 生成结果HTML
+                let html = `
+                    <div style="padding: 20px; background-color: #f5f5f5; border-radius: 5px; margin-bottom: 20px;">
+                        <h2 style="color: #333;">MMPI测试结果</h2>
+                        <p>性别：${userInfo.gender === 'male' ? '男' : '女'}</p>
+                        <p>年龄：${userInfo.age}</p>
+                        <p>未答题数：${rawScores['未答题数'] || 0}</p>
+                    </div>
+                `;
+
+                // 添加结果表格
+                html += `
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <thead>
+                                <tr style="background-color: #4CAF50; color: white;">
+                                    <th style="padding: 12px; text-align: left;">量表类别</th>
+                                    <th style="padding: 12px; text-align: left;">量表名称</th>
+                                    <th style="padding: 12px; text-align: center;">原始分</th>
+                                    <th style="padding: 12px; text-align: center;">T分数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                // 填充表格内容
+                Object.entries(scaleCategories).forEach(([category, scales], categoryIndex) => {
+                    scales.forEach((scale, index) => {
+                        const raw = rawScores[scale.key] !== undefined ? 
+                                   rawScores[scale.key].toFixed(2) : '-';
+                        const t = tScores[scale.key] !== undefined ? 
+                                 tScores[scale.key].toFixed(2) : '-';
+                        
+                        html += `
+                            <tr style="background-color: ${index % 2 === 0 ? '#f9f9f9' : 'white'};">
+                                ${index === 0 ? `<td style="padding: 12px; border: 1px solid #ddd;" rowspan="${scales.length}">${category}</td>` : ''}
+                                <td style="padding: 12px; border: 1px solid #ddd;">${scale.key}（${scale.name}）</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${raw}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${t}</td>
+                            </tr>
+                        `;
+                    });
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                // 显示结果
+                resultDiv.innerHTML = html;
+                console.log('结果显示完成');
+            }
+        }
+
+        // 确保 DOM 加载完成后再初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM加载完成，初始化测试...');
+            window.mmpiTest = new MMPITest();
+        });
+    </script>
+</body>
+</html>
