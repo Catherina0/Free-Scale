@@ -422,18 +422,48 @@
             collectAnswers() {
                 const answers = {};
                 for(let i = 1; i <= this.questions.length; i++) {
-                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
-                    if(selected) {
-                        answers[i] = parseInt(selected.value);
+                    if(i === 106 || i === 107) {
+                        // 特殊题目的处理
+                        const question = this.questions[i - 1];
+                        const subAnswersComplete = question.subQuestions.every((_, index) => {
+                            const selected = document.querySelector(`input[name="q${i}_${index}"]:checked`);
+                            if(selected) {
+                                answers[`q${i}_${index}`] = parseInt(selected.value);
+                                return true;
+                            }
+                            return false;
+                        });
+                        if(subAnswersComplete) {
+                            answers[i] = 1; // 临时占位，实际值会在calculate中计算
+                        }
+                    } else {
+                        // 普通题目的处理
+                        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                        if(selected) {
+                            answers[i] = parseInt(selected.value);
+                        }
                     }
                 }
                 return answers;
             }
 
             validateAnswers(answers) {
-                const expectedCount = this.questions.length;
-                const actualCount = Object.keys(answers).length;
-                return actualCount === expectedCount;
+                // 检查普通题目 (1-105)
+                for(let i = 1; i <= 105; i++) {
+                    if(answers[i] === undefined) return false;
+                }
+                
+                // 检查特殊题目 106
+                const q106Complete = Array.from({length: 6}).every((_, i) => 
+                    answers[`q106_${i}`] !== undefined
+                );
+                
+                // 检查特殊题目 107
+                const q107Complete = Array.from({length: 15}).every((_, i) => 
+                    answers[`q107_${i}`] !== undefined
+                );
+
+                return q106Complete && q107Complete;
             }
         }
 
