@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCL-90 症状自评量表</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .intro {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .options {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+        }
+        .factor-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro">
+        <h1>SCL-90 症状自评量表</h1>
+        <p>指导语：下面列出一些人们可能会遇到的问题或症状。请仔细阅读每一条，然后选择一个最能表达您最近一周（包括今天）实际感受的答案。</p>
+    </div>
+
+    <div id="questionnaire"></div>
+    <button type="button" onclick="scl90Scale.calculate()">提交评估</button>
+    <div id="result"></div>
+
+    <script>
+        class SCL90Scale {
+            constructor() {
+                this.questions = [
+                    "头痛",
+                    "神经过敏，心中不踏实", 
+                    "头脑中有不必要的想法或字句盘旋",
+                    "头晕或晕倒",
+                    "对异性的兴趣减退",
+                    "对旁人责备求全",
+                    "感到别人能控制您的思想",
+                    "责怪别人制造麻烦", 
+                    "忘性大",
+                    "担心自己的衣饰整齐及仪态的端正",
+                    "容易烦恼和激动",
+                    "胸痛",
+                    "害怕空旷的场所或街道",
+                    "感到自己的精力下降，活动减慢",
+                    "想结束自己的生命",
+                    "听到旁人听不到的声音",
+                    "发抖",
+                    "感到大多数人都不可信任",
+                    "胃口不好",
+                    "容易哭泣",
+                    "同异性相处时感到害羞不自在",
+                    "感到受骗，中了圈套或有人想抓住您",
+                    "无缘无故地突然感到害怕",
+                    "自己不能控制地大发脾气",
+                    "怕单独出门",
+                    "经常责怪自己",
+                    "腰痛",
+                    "感到难以完成任务",
+                    "感到孤独",
+                    "感到苦闷",
+                    "过分担忧",
+                    "对事物不感兴趣",
+                    "感到害怕",
+                    "您的感情容易受到伤害",
+                    "旁人能知道您的私下想法",
+                    "感到别人不理解您、不同情您",
+                    "感到人们对您不友好，不喜欢您",
+                    "做事必须做得很慢以保证做得正确",
+                    "心跳得很厉害",
+                    "恶心或胃部不舒服",
+                    "感到比不上他人",
+                    "肌肉酸痛",
+                    "感到有人在监视您、谈论您",
+                    "难以入睡",
+                    "做事必须反复检查",
+                    "难以做出决定",
+                    "怕乘电车、公共汽车、地铁或火车",
+                    "呼吸有困难",
+                    "一阵阵发冷或发热",
+                    "因为感到害怕而避开某些东西、场合或活动",
+                    "脑子变空了",
+                    "身体发麻或刺痛",
+                    "喉咙有梗塞感",
+                    "感到前途没有希望",
+                    "不能集中注意力",
+                    "感到身体的某一部分软弱无力",
+                    "感到紧张或容易紧张",
+                    "感到手或脚发重",
+                    "想到死亡的事",
+                    "吃得太多",
+                    "当别人看着您或谈论您时感到不自在",
+                    "有一些不属于您自己的想法",
+                    "有想打人或伤害他人的冲动",
+                    "醒得太早",
+                    "必须反复洗手、点数",
+                    "睡得不稳不深",
+                    "有想摔坏或破坏东西的想法",
+                    "有一些别人没有的想法",
+                    "感到对别人神经过敏",
+                    "在商店或电影院等人多的地方感到不自在",
+                    "感到任何事情都很困难",
+                    "一阵阵恐惧或惊恐",
+                    "感到公共场合吃东西很不舒服",
+                    "经常与人争论",
+                    "单独一人时神经很紧张",
+                    "别人对您的成绩没有做出恰当的评价",
+                    "即使和别人在一起也感到孤单",
+                    "感到坐立不安心神不定",
+                    "感到自己没有什么价值",
+                    "感到熟悉的东西变成陌生或不像是真的",
+                    "大叫或摔东西",
+                    "害怕会在公共场合晕倒",
+                    "感到别人想占您的便宜",
+                    "为一些有关性的想法而很苦恼",
+                    "您认为应该因为自己的过错而受到惩罚",
+                    "感到要很快把事情做完",
+                    "感到自己的身体有严重问题",
+                    "从未感到和其他人很亲近",
+                    "感到自己有罪",
+                    "感到自己的脑子有毛病"
+                ];
+                
+                this.options = [
+                    "从无", "很轻", "中等", "偏重", "严重"
+                ];
+
+                this.factors = {
+                    "躯体化": [1, 4, 12, 27, 40, 42, 48, 49, 52, 53, 56, 58],
+                    "强迫症状": [3, 9, 10, 28, 38, 45, 46, 51, 55, 65],
+                    "人际关系敏感": [6, 21, 34, 36, 37, 41, 61, 69, 73],
+                    "抑郁": [5, 14, 15, 20, 22, 26, 29, 30, 31, 32, 54, 71, 79],
+                    "焦虑": [2, 17, 23, 33, 39, 57, 72, 78, 80, 86],
+                    "敌对": [11, 24, 63, 67, 74, 81],
+                    "恐怖": [13, 25, 47, 50, 70, 75, 82],
+                    "偏执": [8, 18, 43, 68, 76, 83],
+                    "精神病性": [7, 16, 35, 62, 77, 84, 85, 87, 88, 90],
+                    "其他": [19, 44, 59, 60, 64, 66, 89]
+                };
+                
+                this.init();
+            }
+
+            init() {
+                const container = document.getElementById('questionnaire');
+                container.innerHTML = this.generateQuestions();
+            }
+
+            generateQuestions() {
+                return this.questions.map((question, index) => `
+                    <div class="question">
+                        <p>${index + 1}. ${question}</p>
+                        <div class="options">
+                            ${this.generateOptions(index + 1)}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            generateOptions(questionNum) {
+                return this.options.map((option, index) => `
+                    <label>
+                        <input type="radio" name="q${questionNum}" value="${index + 1}">
+                        ${option}
+                    </label>
+                `).join('');
+            }
+
+            calculateFactorScore(answers, factorItems) {
+                return factorItems.reduce((sum, item) => sum + (answers[item] || 0), 0);
+            }
+
+            getFactorInterpretation(factorName, score) {
+                const interpretations = {
+                    "躯体化": score > 36 ? "身体不适感较明显" : "躯体症状表现不明显",
+                    "强迫症状": score > 30 ? "强迫症状较明显" : "强迫症状不明显",
+                    "人际关系敏感": score > 27 ? "人际关系较为敏感" : "人际关系正常",
+                    "抑郁": score > 39 ? "抑郁程度较强" : "抑郁程度较弱",
+                    "焦虑": score > 30 ? "较易焦虑" : "不易焦虑",
+                    "敌对": score > 18 ? "易表现敌对" : "较为友好",
+                    "恐怖": score > 21 ? "恐怖症状较明显" : "恐怖症状不明显",
+                    "偏执": score > 18 ? "偏执症状明显" : "偏执症状不明显",
+                    "精神病性": score > 30 ? "精神病性症状较明显" : "精神病性症状不明显"
+                };
+                return interpretations[factorName] || "无具体解释";
+            }
+
+            calculate() {
+                const answers = {};
+                for(let i = 1; i <= this.questions.length; i++) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if(selected) {
+                        answers[i] = parseInt(selected.value);
+                    }
+                }
+
+                if(Object.keys(answers).length !== this.questions.length) {
+                    alert("请回答所有问题！");
+                    return;
+                }
+
+                const factorScores = {};
+                for(const [factor, items] of Object.entries(this.factors)) {
+                    factorScores[factor] = this.calculateFactorScore(answers, items);
+                }
+
+                this.displayResult(factorScores);
+            }
+
+            displayResult(factorScores) {
+                const result = document.getElementById('result');
+                let html = '<h3>评估结果</h3>';
+                
+                for(const [factor, score] of Object.entries(factorScores)) {
+                    if(factor !== "其他") {
+                        html += `
+                            <div class="factor-result">
+                                <h4>${factor}</h4>
+                                <p>得分：${score}</p>
+                                <p>解释：${this.getFactorInterpretation(factor, score)}</p>
+                            </div>
+                        `;
+                    }
+                }
+                
+                result.innerHTML = html;
+            }
+        }
+
+        // 初始化量表
+        const scl90Scale = new SCL90Scale();
+    </script>
+</body>
+</html>
