@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCL-32 自测量表</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .intro {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .options {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro">
+        <h1>HCL-32 自测量表</h1>
+        <p>指导语：以下是一些关于情绪和行为的描述，请根据您的实际情况选择"是"或"否"。</p>
+    </div>
+
+    <div id="questionnaire"></div>
+    <button type="button" onclick="hclScale.calculate()">提交评估</button>
+    <div id="result"></div>
+
+    <script>
+        class HCLScale {
+            constructor() {
+                this.questions = [
+                    "你是否有时会感到特别快乐，情绪高涨到与平时不同？",
+                    "你是否会感到精力旺盛，不需要像平时一样多的睡眠？",
+                    "你是否会觉得思维加快，想法一个接一个冒出来？",
+                    "你是否会说话比平时更多或者语速更快？",
+                    "你是否会感到自己特别有创意或才思泉涌？",
+                    "你是否会有特别强的冒险精神，或愿意尝试新事物？",
+                    "你是否会觉得比平时更容易分心？",
+                    "你是否会比平时更容易生气或感到烦躁？",
+                    "你是否觉得自己比平时更有自信？",
+                    "你是否觉得对生活特别有激情，动力十足？",
+                    "你是否有时会做出一些不顾后果的冲动行为（如大额消费、快速决定等）？",
+                    "你是否觉得自己在社交方面特别活跃或外向？",
+                    "你是否会感到特别有成就感或认为自己能完成很多事？",
+                    "你是否会比平时更容易感到受挫或情绪低落？",
+                    "你是否有过'过山车'式的情绪波动？",
+                    "你是否会比平时更加喜欢冒险（如赌博、极限运动）？",
+                    "你是否会花费比平时更多的钱？",
+                    "你是否觉得对你平时不太感兴趣的事情突然产生了强烈兴趣？",
+                    "你是否会觉得对事物的感知能力（如颜色、声音）变得更强？",
+                    "你是否会觉得比平时更幽默或更有吸引力？",
+                    "你是否觉得你的工作效率突然变得非常高？",
+                    "你是否觉得自己比平时更容易产生共鸣或感到情感丰富？",
+                    "你是否觉得比平时更容易争吵或与人产生冲突？",
+                    "你是否觉得自己特别容易感到兴奋或激动？",
+                    "你是否觉得你的生活目标突然变得清晰或意义重大？",
+                    "你是否觉得你能够比平时更清楚地表达你的想法？",
+                    "你是否觉得比平时更加敏感或情绪波动较大？",
+                    "你是否觉得比平时更容易感到挫败或疲惫？",
+                    "你是否觉得自己在某些时候特别幸运或特别能抓住机会？",
+                    "你是否觉得比平时更加愿意帮助别人或觉得自己对别人有更大的影响力？",
+                    "你是否觉得比平时更加依赖某些特定的习惯或行为来控制情绪？",
+                    "你是否觉得在不同时间里，你的情绪波动特别剧烈？"
+                ];
+                
+                this.options = ["是", "否"];
+                this.init();
+            }
+
+            init() {
+                const container = document.getElementById('questionnaire');
+                container.innerHTML = this.generateQuestions();
+            }
+
+            generateQuestions() {
+                return this.questions.map((question, index) => `
+                    <div class="question">
+                        <p>${index + 1}. ${question}</p>
+                        <div class="options">
+                            ${this.generateOptions(index + 1)}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            generateOptions(questionNum) {
+                return this.options.map((option, index) => `
+                    <label>
+                        <input type="radio" name="q${questionNum}" value="${index}">
+                        ${option}
+                    </label>
+                `).join('');
+            }
+
+            calculate() {
+                const answers = {};
+                for(let i = 1; i <= this.questions.length; i++) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if(selected) {
+                        answers[i] = parseInt(selected.value);
+                    }
+                }
+
+                if(Object.keys(answers).length !== this.questions.length) {
+                    alert("请回答所有问题！");
+                    return;
+                }
+
+                // 计算"是"的数量（值为0表示"是"）
+                const score = Object.values(answers).filter(value => value === 0).length;
+                this.displayResult(score);
+            }
+
+            displayResult(score) {
+                let interpretation = "";
+                if(score <= 14) {
+                    interpretation = "情绪波动可能在正常范围内。没有明显的轻躁狂或双相情感障碍倾向。如有轻微的情绪困扰，可以通过自我调节或改善生活方式解决。";
+                } else if(score <= 20) {
+                    interpretation = "存在轻度的轻躁狂倾向。可能表现为情绪偶尔高涨、活跃，但未达到显著影响生活或工作功能的程度。建议关注自己的情绪变化，适当减压或调整生活节奏。";
+                } else {
+                    interpretation = "有较明显的轻躁狂或双相情感障碍倾向。可能表现为情绪高涨伴随冲动行为、易怒或过度自信等症状。建议尽快咨询专业的心理医生或精神科医生，进行进一步评估和诊断。";
+                }
+
+                const result = document.getElementById('result');
+                result.innerHTML = `
+                    <h3>评估结果</h3>
+                    <p>得分：${score}</p>
+                    <p>结果解释：${interpretation}</p>
+                `;
+            }
+        }
+
+        // 初始化量表
+        const hclScale = new HCLScale();
+    </script>
+</body>
+</html>
