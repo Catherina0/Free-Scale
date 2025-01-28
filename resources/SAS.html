@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>焦虑自评量表(SAS)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .intro {
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .options {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro">
+        <h1>焦虑自评量表(SAS)</h1>
+        <p>指导语：下面有20个问题，请仔细阅读每一条，根据您最近一周的实际感受选择适当选项。</p>
+    </div>
+
+    <div id="questionnaire"></div>
+    <button type="button" onclick="sasScale.calculate()">提交评估</button>
+    <div id="result"></div>
+
+    <script>
+        class SASScale {
+            constructor() {
+                this.questions = [
+                   "我感到比往常更加神经过敏的焦虑",
+                   "我无缘无故感到担心",
+    "我容易心烦意乱或感到恐慌",
+    "我感到我的身体好像被分成几块，支离破碎",
+    "我感到事事都很顺利，不会有倒霉的事情发生",
+    "我的四肢拌动和震颤",
+    "我因头痛、颈痛和背痛而烦恼",
+    "我感到无力而且容易疲劳",
+    "我感到平静，能安静坐下来",
+    "我感到我的心跳较快",
+    "我因阵阵的眩晕而不舒服",
+    "我有阵阵要晕倒的感觉",
+    "我呼吸时进气和出气都不费力",
+    "我的手指和脚趾感到麻木和刺激",
+    "我因胃痛和消化不良而苦恼",
+    "我必须频繁排尿",
+    "我的手总是温暖而干燥",
+    "我觉得脸发烧发红",
+    "我容易入睡，晚上休息很好",
+    "我做恶梦"
+                ];
+                
+                this.options = [
+                    {text: "很少有", score: 1},
+                    {text: "有时有", score: 2},
+                    {text: "大部分时间有", score: 3},
+                    {text: "绝大部分时间有", score: 4}
+                ];
+
+                this.reverseQuestions = [5, 9, 13, 17, 19]; // 反向计分的题目编号
+                
+                this.conclusions = {
+                    49: "您的焦虑水平在正常范围之内，正常范围内的焦虑水平，不意味着您此刻没有焦虑情绪，可能您正感到轻微的不适、不安，我们将此称为适度焦虑。适度焦虑是一种“合理情绪”，也就是我们平常会感受到的一些情绪，比如考试前的紧张，上台演讲之前的焦虑，重大抉择之前的恐慌，适度焦虑有助于我们认清自身状态，抱持警惕和刺激，化焦虑为动力，激发人的行动力。如果您为此感到困扰，让我们以“不评判”为目的去观察自己的情绪、想法，不与它较劲，观察它，品味它，体会它，从而去接纳它，也许你会发现，接纳焦虑情绪，比逃避焦虑，会让你感到更轻松，更舒适。如果你感到轻松，继续保持愉快心情吧！",
+                    59: "您的焦虑水平为轻度，也许焦虑情绪已经让你感到困扰，甚至有时感到肌肉紧张，呼吸不畅，过度思索感到无法停止思考，让你的生活受到了一定的影响，缓解焦虑小建议： 1.接纳自己的情绪，当你对抗、或者回避焦虑的时候，也许你会发现自己感到更加的不自在。我们不需要“克服”焦虑，我们需要的是学会与焦虑共存。可尝试了解“森田疗法”，也许会让您有收获； 2.去跑步吧！坚持每天做有氧运动可以起到避免焦虑的作用，运动也可以给我们提供时间寻求有效的解决问题的方法，还可以缓解紧张情绪； 3.体验深度放松：冥想、瑜伽、正念等方式是经过验证过的有助于人们深度放松的方法，这种深度放松的方式可以让人养成遇事平和冷静的习惯； 4.如果做了诸多尝试与调整，依然存在困扰，建议寻找平台的专业心理咨询师寻求心理帮助。祝好。【温馨提示：在本量表中得分并不能作为焦虑症的诊断标准，仅供你了解自己使用。焦虑症的诊断和治疗，只有精神科医生才能进行哦】",
+                    69: "您的焦虑水平为中度，引起你焦虑的原因，可能不只是当下生活中的实际困扰，还包括对未来无名的担心，甚至是模糊的、不明原因的焦虑和担心，而且焦虑情绪似乎已经不只是影响到了你的心态、正常生活，你的身体也感受到了焦虑，身体过分紧张，肌肉过于紧绷，呼吸不够轻松，过分机警等等，在此情况下，可尝试运动、呼吸法、肌肉渐进放松法、正念、冥想、瑜伽等方式缓解情绪，如果感到靠自己的调整依然无法摆脱焦虑情绪，建议寻找本平台专业的心理咨询师寻求专业帮助，同时，建议到精神科或心理科做进一步检查，明确的焦虑症诊断需要到精神科进行，对于较严重的焦虑症，尽早进行药物治疗才是关键。多多关爱自己的心，祝好。【温馨提示：在本量表中得分并不能作为焦虑症的诊断标准，仅供你了解自己使用。焦虑症的诊断和治疗，只有精神科医生才能进行哦】",
+                    80: "您的焦虑水平较高，可尝试运动、呼吸法、肌肉渐进放松法、正念、冥想、瑜伽等方式缓解情绪，如果感到靠自己的调整依然无法摆脱焦虑情绪，建议寻找本平台专业的心理咨询师寻求专业帮助，同时，建议到精神科或心理科做进一步检查，明确的焦虑症诊断需要到精神科进行，对于较严重的焦虑症，尽早进行药物治疗才是关键。焦虑症的主要症状是，内心充满了过度的、长久的、模糊的、不明原因的焦虑和担心。其具体症状包括以下四类：身体紧张、自主神经系统反应性过强、对未来无名的担心、过分机警。这些症状有时单独存在，也可同时出现。多多关爱自己的心，祝好。【温馨提示：在本量表中得分并不能作为焦虑症的诊断标准，仅供你了解自己使用。焦虑症的诊断和治疗，只有精神科医生才能进行哦】"
+                };
+                
+                console.log("SASScale initialized");
+                this.init();
+            }
+
+            init() {
+                const container = document.getElementById('questionnaire');
+                container.innerHTML = this.generateQuestions();
+                console.log("Questions generated");
+            }
+
+            generateQuestions() {
+                return this.questions.map((question, index) => {
+                    const questionNum = index + 1;
+                    console.log(`Generating question ${questionNum}`);
+                    return `
+                        <div class="question">
+                            <p>${questionNum}. ${question}</p>
+                            <div class="options">
+                                ${this.generateOptions(questionNum)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            generateOptions(questionNum) {
+                const isReverse = this.reverseQuestions.includes(questionNum);
+                return this.options.map((option, index) => {
+                    const score = isReverse ? this.options.length - index : index + 1;
+                    return `
+                        <label>
+                            <input type="radio" name="q${questionNum}" value="${score}">
+                            ${option.text}
+                        </label>
+                    `;
+                }).join('');
+            }
+
+            calculate() {
+                console.log("Calculating results");
+                const answers = {};
+                for(let i = 1; i <= this.questions.length; i++) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    if(selected) {
+                        answers[i] = parseInt(selected.value);
+                    }
+                }
+
+                if(Object.keys(answers).length !== this.questions.length) {
+                    alert("请回答所有问题！");
+                    return;
+                }
+
+                const totalScore = Object.values(answers).reduce((a, b) => a + b, 0);
+                console.log("Total score:", totalScore);
+                this.displayResult(totalScore);
+            }
+
+            displayResult(score) {
+                let interpretation = "";
+                const thresholds = Object.keys(this.conclusions).sort((a, b) => a - b);
+                
+                for(let threshold of thresholds) {
+                    if(score <= threshold) {
+                        interpretation = this.conclusions[threshold];
+                        break;
+                    }
+                }
+
+                console.log("Score:", score, "Interpretation:", interpretation);
+                const result = document.getElementById('result');
+                result.innerHTML = `
+                    <h3>评估结果</h3>
+                    <p>总分：${score}</p>
+                    <p>结果解释：${interpretation}</p>
+                `;
+            }
+        }
+
+        // 初始化量表
+        const sasScale = new SASScale();
+    </script>
+</body>
+</html>
