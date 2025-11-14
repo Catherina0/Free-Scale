@@ -52,6 +52,9 @@
 
     <!-- 按钮区域 -->
     <div class="button-container">
+      <button class="save-btn" @click="handleSave">
+        <span class="icon">💾</span> 保存结果
+      </button>
       <button class="reset-btn" @click="handleReset">
         <span class="icon">↻</span> 重新开始
       </button>
@@ -83,6 +86,49 @@ export default {
       return props.result.subscores && Object.keys(props.result.subscores).length > 0
     })
 
+    const handleSave = () => {
+      // 准备保存的数据
+      const timestamp = new Date().toISOString()
+      const saveData = {
+        timestamp: timestamp,
+        quiz: {
+          id: props.quiz.id,
+          title: props.quiz.title,
+          description: props.quiz.description
+        },
+        answers: props.result.answers,
+        result: {
+          rawScore: props.result.rawScore,
+          scaledScore: props.result.scaledScore,
+          subscores: props.result.subscores,
+          timeTaken: props.result.timeTaken
+        },
+        conclusion: conclusion.value
+      }
+
+      // 创建Blob对象
+      const blob = new Blob([JSON.stringify(saveData, null, 2)], {
+        type: 'application/json'
+      })
+
+      // 创建下载链接
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      // 使用时间戳创建文件名
+      const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+      link.download = `quiz_result_${props.quiz.id}_${dateStr}.json`
+      
+      // 触发下载
+      document.body.appendChild(link)
+      link.click()
+      
+      // 清理
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    }
+
     const conclusion = computed(() => {
       // 支持两种格式：quiz.scoring.interpretations 或 quiz.interpretation
       const interpretations = props.quiz.scoring?.interpretations || props.quiz.interpretation
@@ -109,12 +155,13 @@ export default {
     }
 
     const handleBack = () => {
-      window.location.reload()
+      window.location.href = '/'
     }
 
     return {
       hasSubscores,
       conclusion,
+      handleSave,
       handleReset,
       handleBack
     }
@@ -325,6 +372,17 @@ button {
 
   .icon {
     font-size: 1.2em;
+  }
+}
+
+.save-btn {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+
+  &:hover {
+    background: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
   }
 }
 

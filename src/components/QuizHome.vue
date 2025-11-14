@@ -1,8 +1,14 @@
 <template>
   <div class="quiz-home">
     <div class="quiz-content">
-      <h1 class="title">心理量表测评系统</h1>
+      <div class="header-container">
+        <h1 class="title">心理量表测评系统</h1>
+        <a href="https://github.com/Catherina0/quiz" target="_blank" rel="noopener" class="github-link" title="如果觉得有用，请给我们一个 Star ⭐">
+          <img src="https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" alt="GitHub Repository">
+        </a>
+      </div>
       <p class="subtitle">选择您要进行的心理测评量表</p>
+      <p class="star-hint">💡 如果觉得有用，请到 <a href="https://github.com/Catherina0/quiz" target="_blank" rel="noopener">GitHub</a> 给我们一个 Star ⭐</p>
 
       <div class="categories">
         <div 
@@ -164,19 +170,60 @@ export default {
   max-width: 100%;
 }
 
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 8px;
+}
+
 .title {
   text-align: center;
   font-size: 2em;
   color: #1f2937;
-  margin-bottom: 8px;
+  margin: 0;
   font-weight: 600;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  
+  img {
+    width: 32px;
+    height: 32px;
+    transition: opacity 0.3s, transform 0.3s;
+    
+    &:hover {
+      opacity: 0.8;
+      transform: scale(1.1);
+    }
+  }
 }
 
 .subtitle {
   text-align: center;
   color: #6b7280;
   font-size: 1em;
+  margin-bottom: 10px;
+}
+
+.star-hint {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9em;
   margin-bottom: 30px;
+  
+  a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 .categories {
@@ -278,13 +325,23 @@ export default {
     padding: 20px 15px;
   }
 
+  .header-container {
+    gap: 10px;
+  }
+
   .title {
     font-size: 1.5em;
   }
 
-  .subtitle {
-    font-size: 0.9em;
-    margin-bottom: 20px;
+  .github-link img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .subtitle,
+  .star-hint {
+    font-size: 0.85em;
+    margin-bottom: 15px;
   }
 
   .category-header {
