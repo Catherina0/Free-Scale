@@ -1,0 +1,69 @@
+{
+  "title": "焦虑自评量表(SAS)",
+  "description": "焦虑自评量表(Self-Rating Anxiety Scale, SAS)是由Zung编制的用于评估焦虑水平的量表。该量表包含20个项目，其中包含一些反向计分的题目。",
+  "instruction": "下面有20个问题，请仔细阅读每一条，根据您最近一周的实际感受选择适当选项。该问卷用于帮助您了解自己的焦虑水平。",
+  "timeLimit": 10,
+  "defaultQuestionType": "radio",
+  "defaultOptions": [
+    {"text": "很少有", "score": 1},
+    {"text": "有时有", "score": 2},
+    {"text": "大部分时间有", "score": 3},
+    {"text": "绝大部分时间有", "score": 4}
+  ],
+  "questions": [
+    {"id": 1, "text": "我感到比往常更加神经过敏的焦虑", "type": "radio", "reverse": false},
+    {"id": 2, "text": "我无缘无故感到担心", "type": "radio", "reverse": false},
+    {"id": 3, "text": "我容易心烦意乱或感到恐慌", "type": "radio", "reverse": false},
+    {"id": 4, "text": "我感到我的身体好像被分成几块，支离破碎", "type": "radio", "reverse": false},
+    {"id": 5, "text": "我感到事事都很顺利，不会有倒霉的事情发生", "type": "radio", "reverse": true},
+    {"id": 6, "text": "我的四肢拌动和震颤", "type": "radio", "reverse": false},
+    {"id": 7, "text": "我因头痛、颈痛和背痛而烦恼", "type": "radio", "reverse": false},
+    {"id": 8, "text": "我感到无力而且容易疲劳", "type": "radio", "reverse": false},
+    {"id": 9, "text": "我感到平静，能安静坐下来", "type": "radio", "reverse": true},
+    {"id": 10, "text": "我感到我的心跳较快", "type": "radio", "reverse": false},
+    {"id": 11, "text": "我因阵阵的眩晕而不舒服", "type": "radio", "reverse": false},
+    {"id": 12, "text": "我有阵阵要晕倒的感觉", "type": "radio", "reverse": false},
+    {"id": 13, "text": "我呼吸时进气和出气都不费力", "type": "radio", "reverse": true},
+    {"id": 14, "text": "我的手指和脚趾感到麻木和刺激", "type": "radio", "reverse": false},
+    {"id": 15, "text": "我因胃痛和消化不良而苦恼", "type": "radio", "reverse": false},
+    {"id": 16, "text": "我必须频繁排尿", "type": "radio", "reverse": false},
+    {"id": 17, "text": "我的手总是温暖而干燥", "type": "radio", "reverse": true},
+    {"id": 18, "text": "我觉得脸发烧发红", "type": "radio", "reverse": false},
+    {"id": 19, "text": "我容易入睡，晚上休息很好", "type": "radio", "reverse": true},
+    {"id": 20, "text": "我做恶梦", "type": "radio", "reverse": false}
+  ],
+  "scoring": {
+    "method": "custom",
+    "description": "对反向计分的题目(5,9,13,17,19)需要反向处理，然后计算总分"
+  },
+  "interpretation": [
+    {
+      "min": 20,
+      "max": 49,
+      "level": "正常范围",
+      "description": "您的焦虑水平在正常范围之内。正常范围内的焦虑水平，不意味着您此刻没有焦虑情绪，可能您正感到轻微的不适、不安，我们将此称为适度焦虑。适度焦虑是一种'合理情绪'，有助于我们认清自身状态。",
+      "suggestions": ["保持愉快心情", "继续保持良好的生活习惯", "定期进行放松活动"]
+    },
+    {
+      "min": 50,
+      "max": 59,
+      "level": "轻度焦虑",
+      "description": "您的焦虑水平为轻度。焦虑情绪已经让你感到困扰，甚至有时感到肌肉紧张、呼吸不畅。让你的生活受到了一定的影响。",
+      "suggestions": ["尝试运动、呼吸法、肌肉渐进放松法", "练习正念、冥想、瑜伽", "改善生活方式，适当减压", "如持续困扰，建议寻求心理咨询"]
+    },
+    {
+      "min": 60,
+      "max": 69,
+      "level": "中度焦虑",
+      "description": "您的焦虑水平为中度。焦虑症状已经显著影响您的日常生活，包括身体紧张、自主神经系统过度反应等症状。",
+      "suggestions": ["进行系统的放松训练", "寻求专业心理咨询师帮助", "考虑到精神科进行进一步检查", "对于较严重的焦虑症，尽早进行药物治疗"]
+    },
+    {
+      "min": 70,
+      "max": 80,
+      "level": "较高焦虑",
+      "description": "您的焦虑水平较高。可能表现为过度担忧、长期的模糊焦虑、机警过度等症状，严重影响生活质量。",
+      "suggestions": ["立即寻求专业心理医生帮助", "进行医学评估和诊断", "可能需要药物治疗", "参加焦虑管理和放松训练"]
+    }
+  ]
+}
