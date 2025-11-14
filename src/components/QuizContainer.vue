@@ -63,11 +63,9 @@ export default {
     // 加载问卷数据
     const loadQuiz = async () => {
       try {
-        const response = await fetch(`/data/${props.quizId}.json`)
-        if (!response.ok) {
-          throw new Error(`无法加载量表: ${props.quizId}`)
-        }
-        quiz.value = await response.json()
+        // 使用 Vite 动态导入 JSON 文件
+        const module = await import(`../../data/${props.quizId}.json`, { assert: { type: 'json' } })
+        quiz.value = module.default
         startTime.value = Date.now()
         answers.value = {}
         submitted.value = false
