@@ -179,6 +179,16 @@ export default {
     const applyScoring = (resultData) => {
       const scoring = quiz.value.scoring
 
+      // 检查是否是MMPI量表
+      if (quiz.value.title && quiz.value.title.includes('MMPI')) {
+        return applyMMPIScoring(resultData)
+      }
+
+      // 检查是否是PDQ4量表
+      if (quiz.value.title && quiz.value.title.includes('PDQ')) {
+        return applyPDQ4Scoring(resultData)
+      }
+
       // 简单求和
       if (scoring.method === 'sum' || scoring.method === 'custom') {
         resultData.rawScore = Object.entries(answers.value).reduce(
@@ -207,6 +217,36 @@ export default {
         )
       }
 
+      // 计算分项得分（如果有subscales配置）
+      if (quiz.value.subscales && Array.isArray(quiz.value.subscales)) {
+        quiz.value.subscales.forEach(subscale => {
+          let subscaleScore = 0
+          subscale.questions.forEach(qId => {
+            const answer = answers.value[qId]
+            const question = quiz.value.questions.find((q, index) => {
+              const questionId = q.id !== undefined ? q.id : (index + 1)
+              return questionId === qId
+            })
+
+            let score = Array.isArray(answer) ? answer.reduce((a, b) => a + b, 0) : (parseFloat(answer) || 0)
+
+            // 处理反向计分
+            if (question && question.reverse) {
+              const options = question.options || quiz.value.defaultOptions || []
+              if (options.length > 0) {
+                const maxScore = Math.max(...options.map(o => o.score || 0))
+                const minScore = Math.min(...options.map(o => o.score || 0))
+                score = maxScore + minScore - score
+              }
+            }
+
+            subscaleScore += score
+          })
+          
+          resultData.subscores[subscale.name] = subscaleScore
+        })
+      }
+
       // 标准分数转换
       if (scoring.standardScores && scoring.standardScores[resultData.rawScore]) {
         resultData.scaledScore = scoring.standardScores[resultData.rawScore]
@@ -215,6 +255,215 @@ export default {
       }
 
       return resultData
+    }
+
+    // PDQ4专用计分函数
+    const applyPDQ4Scoring = (resultData) => {
+      const scoringRules = quiz.value.scoring.scoringRules
+      const userAnswers = answers.value
+      
+      // 计算每个人格障碍类型的得分
+      Object.keys(scoringRules).forEach(typeKey => {
+        if (typeKey === 'concealmentScale') return // 跳过掩饰量表，暂不处理
+        
+        const type = scoringRules[typeKey]
+        let typeScore = 0
+        
+        type.items.forEach(itemId => {
+          const answer = userAnswers[itemId]
+          if (answer === 1) { // 回答"是"计1分
+            typeScore++
+          }
+        })
+        
+        // 保存得分到subscores
+        resultData.subscores[type.name] = typeScore
+      })
+      
+      // 计算总分（所有类型得分之和）
+      resultData.rawScore = Object.values(resultData.subscores).reduce((sum, score) => sum + score, 0)
+      resultData.scaledScore = resultData.rawScore
+      
+      return resultData
+    }
+
+    // MMPI专用计分函数
+    const applyMMPIScoring = (resultData) => {
+      const rules = quiz.value.scoringRules
+      const userAnswers = answers.value
+      
+      // 假设性别，实际应用中应该由用户选择
+      const gender = 'male' // 可以添加性别选择功能
+      const norms = rules.norms[gender]
+      
+      resultData.mmpiScores = {
+        validity: {},
+        clinical: {},
+        additional: {},
+        gender: gender
+      }
+
+      // 计算效度量表
+      if (rules.validity) {
+        // Q量表 - 疑问分数
+        if (rules.validity.Q) {
+          let qScore = 0
+          rules.validity.Q.pairs.forEach(pair => {
+            const ans1 = userAnswers[pair[0]]
+            const ans2 = userAnswers[pair[1]]
+            if (ans1 !== undefined && ans2 !== undefined && ans1 === ans2) {
+              qScore++
+            }
+          })
+          resultData.mmpiScores.validity.Q = {
+            name: '疑问分数',
+            rawScore: qScore
+          }
+        }
+
+        // L量表 - 说谎分数
+        if (rules.validity.L) {
+          let lScore = 0
+          rules.validity.L.falseAnswers.forEach(qid => {
+            if (userAnswers[qid] === 0) lScore++
+          })
+          const lNorm = norms.L
+          const lTScore = calculateTScore(lScore, lNorm.mean, lNorm.sd)
+          resultData.mmpiScores.validity.L = {
+            name: '说谎分数',
+            rawScore: lScore,
+            tScore: lTScore
+          }
+        }
+
+        // F量表 - 诈病分数
+        if (rules.validity.F) {
+          let fScore = 0
+          rules.validity.F.trueAnswers.forEach(qid => {
+            if (userAnswers[qid] === 1) fScore++
+          })
+          rules.validity.F.falseAnswers.forEach(qid => {
+            if (userAnswers[qid] === 0) fScore++
+          })
+          const fNorm = norms.F
+          const fTScore = calculateTScore(fScore, fNorm.mean, fNorm.sd)
+          resultData.mmpiScores.validity.F = {
+            name: '诈病分数',
+            rawScore: fScore,
+            tScore: fTScore
+          }
+        }
+
+        // K量表 - 校正分数
+        if (rules.validity.K) {
+          let kScore = 0
+          if (rules.validity.K.trueAnswers) {
+            rules.validity.K.trueAnswers.forEach(qid => {
+              if (userAnswers[qid] === 1) kScore++
+            })
+          }
+          rules.validity.K.falseAnswers.forEach(qid => {
+            if (userAnswers[qid] === 0) kScore++
+          })
+          const kNorm = norms.K
+          const kTScore = calculateTScore(kScore, kNorm.mean, kNorm.sd)
+          resultData.mmpiScores.validity.K = {
+            name: '校正分数',
+            rawScore: kScore,
+            tScore: kTScore
+          }
+          // 保存K分数供后续校正使用
+          resultData.mmpiScores.kScore = kScore
+        }
+      }
+
+      // 计算临床量表
+      if (rules.clinical) {
+        Object.keys(rules.clinical).forEach(scaleKey => {
+          const scale = rules.clinical[scaleKey]
+          let rawScore = 0
+          
+          if (scale.trueAnswers) {
+            scale.trueAnswers.forEach(qid => {
+              if (userAnswers[qid] === 1) rawScore++
+            })
+          }
+          if (scale.falseAnswers) {
+            scale.falseAnswers.forEach(qid => {
+              if (userAnswers[qid] === 0) rawScore++
+            })
+          }
+
+          const norm = norms[scaleKey]
+          const tScore = calculateTScore(rawScore, norm.mean, norm.sd)
+          
+          resultData.mmpiScores.clinical[scaleKey] = {
+            name: scale.name,
+            rawScore: rawScore,
+            tScore: tScore
+          }
+
+          // 如果有K校正
+          if (scale.kCorrection && resultData.mmpiScores.kScore !== undefined) {
+            const kCorrectedRaw = rawScore + Math.round(resultData.mmpiScores.kScore * scale.kCorrection)
+            const kCorrectedKey = `${scaleKey}+${scale.kCorrection}K`
+            const kCorrectedNorm = norms[kCorrectedKey]
+            if (kCorrectedNorm) {
+              const kCorrectedTScore = calculateTScore(kCorrectedRaw, kCorrectedNorm.mean, kCorrectedNorm.sd)
+              resultData.mmpiScores.clinical[scaleKey].kCorrected = {
+                rawScore: kCorrectedRaw,
+                tScore: kCorrectedTScore,
+                coefficient: scale.kCorrection
+              }
+            }
+          }
+        })
+      }
+
+      // 计算附加量表
+      if (rules.additional) {
+        Object.keys(rules.additional).forEach(scaleKey => {
+          const scale = rules.additional[scaleKey]
+          let rawScore = 0
+          
+          if (scale.trueAnswers) {
+            scale.trueAnswers.forEach(qid => {
+              if (userAnswers[qid] === 1) rawScore++
+            })
+          }
+          if (scale.falseAnswers) {
+            scale.falseAnswers.forEach(qid => {
+              if (userAnswers[qid] === 0) rawScore++
+            })
+          }
+
+          const norm = norms[scaleKey]
+          if (norm) {
+            const tScore = calculateTScore(rawScore, norm.mean, norm.sd)
+            resultData.mmpiScores.additional[scaleKey] = {
+              name: scale.name,
+              rawScore: rawScore,
+              tScore: tScore
+            }
+          }
+        })
+      }
+
+      // 设置总分为临床量表的平均T分
+      const clinicalTScores = Object.values(resultData.mmpiScores.clinical)
+        .map(s => s.tScore)
+        .filter(t => t !== undefined)
+      resultData.rawScore = Math.round(
+        clinicalTScores.reduce((sum, t) => sum + t, 0) / clinicalTScores.length
+      )
+      resultData.scaledScore = resultData.rawScore
+
+      return resultData
+    }
+
+    // 计算T分数
+    const calculateTScore = (rawScore, mean, sd) => {
+      return Math.round(50 + 10 * (rawScore - mean) / sd)
     }
 
     // 处理重新开始

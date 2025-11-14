@@ -5,8 +5,109 @@
       <p class="completion-time">完成时间: {{ result.timeTaken }} 分钟</p>
     </div>
 
-    <!-- 得分显示 -->
-    <div class="score-section">
+    <!-- MMPI详细得分显示 -->
+    <div v-if="isMMPI" class="mmpi-scores-section">
+      <div class="gender-info">
+        <span class="label">使用常模:</span>
+        <span class="value">{{ result.mmpiScores.gender === 'male' ? '男性' : '女性' }}</span>
+      </div>
+
+      <!-- 效度量表 -->
+      <div class="scale-category">
+        <h3 class="category-title">效度量表</h3>
+        <div class="scales-grid">
+          <div v-for="(score, key) in result.mmpiScores.validity" :key="key" class="scale-card">
+            <div class="scale-header">
+              <span class="scale-name">{{ key }} - {{ score.name }}</span>
+            </div>
+            <div class="scale-scores">
+              <div class="score-item">
+                <span class="score-label">原始分:</span>
+                <span class="score-val">{{ score.rawScore }}</span>
+              </div>
+              <div v-if="score.tScore !== undefined" class="score-item">
+                <span class="score-label">T分:</span>
+                <span class="score-val" :class="getTScoreClass(score.tScore)">{{ score.tScore }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 临床量表 -->
+      <div class="scale-category">
+        <h3 class="category-title">临床量表</h3>
+        <div class="scales-grid">
+          <div v-for="(score, key) in result.mmpiScores.clinical" :key="key" class="scale-card">
+            <div class="scale-header">
+              <span class="scale-name">{{ key }} - {{ score.name }}</span>
+            </div>
+            <div class="scale-scores">
+              <div class="score-item">
+                <span class="score-label">原始分:</span>
+                <span class="score-val">{{ score.rawScore }}</span>
+              </div>
+              <div class="score-item">
+                <span class="score-label">T分:</span>
+                <span class="score-val" :class="getTScoreClass(score.tScore)">{{ score.tScore }}</span>
+              </div>
+              <div v-if="score.kCorrected" class="score-item k-corrected">
+                <span class="score-label">K校正(×{{ score.kCorrected.coefficient }}):</span>
+                <span class="score-val">{{ score.kCorrected.rawScore }} 分</span>
+              </div>
+              <div v-if="score.kCorrected" class="score-item k-corrected">
+                <span class="score-label">K校正T分:</span>
+                <span class="score-val" :class="getTScoreClass(score.kCorrected.tScore)">{{ score.kCorrected.tScore }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 附加量表 -->
+      <div v-if="hasAdditionalScales" class="scale-category">
+        <h3 class="category-title">附加量表</h3>
+        <div class="scales-grid">
+          <div v-for="(score, key) in result.mmpiScores.additional" :key="key" class="scale-card">
+            <div class="scale-header">
+              <span class="scale-name">{{ key }} - {{ score.name }}</span>
+            </div>
+            <div class="scale-scores">
+              <div class="score-item">
+                <span class="score-label">原始分:</span>
+                <span class="score-val">{{ score.rawScore }}</span>
+              </div>
+              <div class="score-item">
+                <span class="score-label">T分:</span>
+                <span class="score-val" :class="getTScoreClass(score.tScore)">{{ score.tScore }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- T分说明 -->
+      <div class="tscore-legend">
+        <h4>T分解读</h4>
+        <div class="legend-items">
+          <div class="legend-item">
+            <span class="legend-color normal"></span>
+            <span>正常范围 (40-60)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color mild"></span>
+            <span>轻度异常 (60-70 或 30-40)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color severe"></span>
+            <span>显著异常 (>70 或 <30)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 普通得分显示 -->
+    <div v-else class="score-section">
       <div class="score-card">
         <h3>原始分</h3>
         <div class="score-value">{{ result.rawScore }}</div>
@@ -31,7 +132,7 @@
 
     <!-- 详细分析 -->
     <div v-if="hasSubscores" class="subscores-section">
-      <h3>分项得分</h3>
+      <h3>各维度得分</h3>
       <div class="subscores-grid">
         <div v-for="(score, name) in result.subscores" :key="name" class="subscore-card">
           <div class="subscore-name">{{ name }}</div>
@@ -82,9 +183,24 @@ export default {
   },
   emits: ['reset'],
   setup(props, { emit }) {
+    const isMMPI = computed(() => {
+      return props.result.mmpiScores !== undefined
+    })
+
+    const hasAdditionalScales = computed(() => {
+      return props.result.mmpiScores?.additional && 
+        Object.keys(props.result.mmpiScores.additional).length > 0
+    })
+
     const hasSubscores = computed(() => {
       return props.result.subscores && Object.keys(props.result.subscores).length > 0
     })
+
+    const getTScoreClass = (tScore) => {
+      if (tScore >= 70 || tScore <= 30) return 'severe'
+      if ((tScore >= 60 && tScore < 70) || (tScore > 30 && tScore <= 40)) return 'mild'
+      return 'normal'
+    }
 
     const handleSave = () => {
       // 准备保存的数据
@@ -159,8 +275,11 @@ export default {
     }
 
     return {
+      isMMPI,
+      hasAdditionalScales,
       hasSubscores,
       conclusion,
+      getTScoreClass,
       handleSave,
       handleReset,
       handleBack
@@ -408,6 +527,174 @@ button {
   }
 }
 
+// MMPI专用样式
+.mmpi-scores-section {
+  margin-bottom: 30px;
+
+  .gender-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1em;
+
+    .label {
+      font-weight: 600;
+    }
+
+    .value {
+      font-weight: 700;
+      font-size: 1.2em;
+    }
+  }
+
+  .scale-category {
+    margin-bottom: 35px;
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+    .category-title {
+      font-size: 1.4em;
+      color: #1e293b;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #3b82f6;
+    }
+
+    .scales-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+
+      .scale-card {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 18px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          border-color: #3b82f6;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+          transform: translateY(-2px);
+        }
+
+        .scale-header {
+          margin-bottom: 12px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #f3f4f6;
+
+          .scale-name {
+            font-weight: 700;
+            color: #334155;
+            font-size: 0.95em;
+          }
+        }
+
+        .scale-scores {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+
+          .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: #f9fafb;
+            border-radius: 6px;
+
+            &.k-corrected {
+              background: #fef3c7;
+              border-left: 3px solid #f59e0b;
+            }
+
+            .score-label {
+              font-size: 0.85em;
+              color: #64748b;
+              font-weight: 500;
+            }
+
+            .score-val {
+              font-weight: 700;
+              font-size: 1em;
+              padding: 2px 8px;
+              border-radius: 4px;
+
+              &.normal {
+                color: #10b981;
+                background: #d1fae5;
+              }
+
+              &.mild {
+                color: #f59e0b;
+                background: #fef3c7;
+              }
+
+              &.severe {
+                color: #ef4444;
+                background: #fee2e2;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .tscore-legend {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 25px;
+    border-radius: 10px;
+    margin-top: 25px;
+
+    h4 {
+      margin: 0 0 15px 0;
+      font-size: 1.1em;
+      font-weight: 600;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9em;
+
+        .legend-color {
+          width: 20px;
+          height: 20px;
+          border-radius: 4px;
+          display: inline-block;
+
+          &.normal {
+            background: #10b981;
+          }
+
+          &.mild {
+            background: #f59e0b;
+          }
+
+          &.severe {
+            background: #ef4444;
+          }
+        }
+      }
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .result-header h2 {
     font-size: 1.6em;
@@ -438,6 +725,17 @@ button {
   .subscores-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
     gap: 10px;
+  }
+
+  .mmpi-scores-section {
+    .scale-category .scales-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tscore-legend .legend-items {
+      flex-direction: column;
+      gap: 10px;
+    }
   }
 }
 </style>

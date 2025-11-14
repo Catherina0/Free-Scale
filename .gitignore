@@ -5,3 +5,5 @@ node_modules/
 dist/
 build/
 docs/
+test-mmpi-scoring.js
+test-subscales.js
