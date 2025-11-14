@@ -64,8 +64,36 @@ export default {
     const loadQuiz = async () => {
       try {
         // 使用 Vite 动态导入 JSON 文件
-        const module = await import(`../../data/${props.quizId}.json`, { assert: { type: 'json' } })
-        quiz.value = module.default
+        let quizData
+        switch(props.quizId) {
+          case 'sas':
+            quizData = (await import('../../data/sas.json')).default
+            break
+          case 'PASS':
+            quizData = (await import('../../data/PASS.json')).default
+            break
+          case 'SCL_90':
+            quizData = (await import('../../data/SCL_90.json')).default
+            break
+          case 'MMPI':
+            quizData = (await import('../../data/MMPI.json')).default
+            break
+          case 'PDQ4':
+            quizData = (await import('../../data/PDQ4.json')).default
+            break
+          case 'DES_II':
+            quizData = (await import('../../data/DES_II.json')).default
+            break
+          case 'GSES':
+            quizData = (await import('../../data/GSES.json')).default
+            break
+          case 'HCL_32':
+            quizData = (await import('../../data/HCL_32.json')).default
+            break
+          default:
+            throw new Error(`未知的量表ID: ${props.quizId}`)
+        }
+        quiz.value = quizData
         startTime.value = Date.now()
         answers.value = {}
         submitted.value = false
