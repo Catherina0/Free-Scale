@@ -1,14 +1,2 @@
-# Cloudflare Pages 配置文件
-
-name = "quiz"
-type = "javascript"
-account_id = ""  # 在部署时会自动填入或通过 wrangler 命令配置
-workers_dev = true
-
-# Pages 项目配置
-pages_build_output_dir = "dist"
-
-[build]
-command = "npm install && npm run build"
-cwd = "/"
-root = "/"
+# Cloudflare Pages configuration
+# Build settings should be configured in Cloudflare Pages dashboard
