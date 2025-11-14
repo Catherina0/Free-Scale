@@ -1,6 +1,7 @@
 # 心理量表测评系统 - Vue 3
 
-这是一个使用 **Vue 3 + Vite** 构建的心理量表测评系统。这是学习Vue框架的实践项目。
+这是一个使用 **Vue 3 + Vite** 构建的心理量表测评系统。
+Star Plz
 
 ## 🚀 快速开始
 
@@ -16,10 +17,6 @@ npm run dev
 npm run build
 ```
 
-## 📚 学习资源
-
-- **[VUE_LEARNING_GUIDE.md](./VUE_LEARNING_GUIDE.md)** - 完整的Vue 3学习指南
-- **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - Vue语法速查表
 
 ## 📁 项目结构
 
@@ -39,14 +36,6 @@ src/
 data/                            # 量表JSON配置
 ```
 
-## 🎓 核心学习点
-
-- ✅ 组件化架构
-- ✅ 响应式数据 (ref, computed)
-- ✅ 组件通信 (props, emits)
-- ✅ 异步操作 (async/await, fetch)
-- ✅ 表单处理 (v-model, 事件绑定)
-- ✅ 样式处理 (SCSS, scoped)
 
 ## 💻 功能特性
 
@@ -55,14 +44,3 @@ data/                            # 量表JSON配置
 - 灵活的计分逻辑
 - 响应式设计
 - 实时答题验证
-
-## 🛠️ 技术栈
-
-- Vue 3 (Composition API)
-- Vite
-- SCSS
-- ES6+
-
----
-
-开始学习：打开 `VUE_LEARNING_GUIDE.md`
