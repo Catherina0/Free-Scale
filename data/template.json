@@ -1,0 +1,106 @@
+{
+  "_comment": "这是一个量表配置的模板文件，复制此文件并根据实际量表修改",
+  
+  "title": "量表全称（中英文）",
+  "description": "量表的背景介绍、编制者、年份等信息",
+  "instruction": "给测试者的指导语，说明如何作答",
+  "timeLimit": 10,
+  
+  "defaultQuestionType": "radio",
+  "defaultOptions": [
+    {"text": "选项1", "score": 1},
+    {"text": "选项2", "score": 2},
+    {"text": "选项3", "score": 3},
+    {"text": "选项4", "score": 4}
+  ],
+  
+  "questions": [
+    {
+      "id": 1,
+      "text": "第一道题目的内容",
+      "subtext": "可选的补充说明",
+      "type": "radio",
+      "reverse": false,
+      "required": true
+    },
+    {
+      "id": 2,
+      "text": "使用自定义选项的题目",
+      "options": [
+        {"text": "是", "score": 1},
+        {"text": "否", "score": 0}
+      ]
+    },
+    {
+      "id": 3,
+      "text": "滑块题示例",
+      "type": "slider",
+      "min": 0,
+      "max": 100
+    },
+    {
+      "id": 4,
+      "text": "多选题示例",
+      "type": "checkbox",
+      "options": [
+        {"text": "选项A", "score": 1},
+        {"text": "选项B", "score": 2},
+        {"text": "选项C", "score": 3}
+      ]
+    },
+    {
+      "id": 5,
+      "text": "反向计分题目",
+      "reverse": true
+    }
+  ],
+  
+  "scoring": {
+    "method": "sum",
+    "scaleFactor": 1.0,
+    "subscales": [
+      {
+        "name": "维度1名称",
+        "questions": [1, 2, 3]
+      },
+      {
+        "name": "维度2名称",
+        "questions": [4, 5]
+      }
+    ]
+  },
+  
+  "interpretation": [
+    {
+      "min": 0,
+      "max": 30,
+      "level": "低水平",
+      "description": "得分在此范围的详细解释。\n\n可以使用换行来组织内容。",
+      "suggestions": [
+        "针对此水平的建议1",
+        "针对此水平的建议2"
+      ]
+    },
+    {
+      "min": 31,
+      "max": 60,
+      "level": "中等水平",
+      "description": "得分在此范围的详细解释。",
+      "suggestions": [
+        "建议1",
+        "建议2"
+      ]
+    },
+    {
+      "min": 61,
+      "max": 100,
+      "level": "高水平",
+      "description": "得分在此范围的详细解释。",
+      "suggestions": [
+        "建议1",
+        "建议2",
+        "建议3"
+      ]
+    }
+  ]
+}

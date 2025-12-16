@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+.env
+.env.local
+dist/
+build/
+docs/
+test-mmpi-scoring.js
+test-subscales.js
