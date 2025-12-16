@@ -9,7 +9,7 @@
         type="radio"
         :name="`q${questionId}`"
         :value="option.value || option.score || index"
-        :checked="answer == (option.value || option.score || index)"
+        :checked="isSelected(option, index)"
         @change="handleChange"
       />
       <span class="option-text">{{ option.text || option.label }}</span>
@@ -36,12 +36,43 @@ export default {
   },
   emits: ['answer'],
   setup(props, { emit }) {
+    const isSelected = (option, index) => {
+      const optionValue = option.value !== undefined ? option.value : (option.score !== undefined ? option.score : index)
+      const currentAnswer = props.answer
+      
+      // 使用严格相等比较，确保类型一致
+      if (currentAnswer === undefined || currentAnswer === null) {
+        return false
+      }
+      
+      // 如果两者都是数字，进行数字比较
+      if (typeof optionValue === 'number' && typeof currentAnswer === 'number') {
+        return optionValue === currentAnswer
+      }
+      
+      // 如果一个是数字，一个是字符串，尝试转换后比较
+      if (typeof optionValue === 'number' && typeof currentAnswer === 'string') {
+        return optionValue === parseFloat(currentAnswer)
+      }
+      
+      if (typeof optionValue === 'string' && typeof currentAnswer === 'number') {
+        return parseFloat(optionValue) === currentAnswer
+      }
+      
+      // 字符串比较
+      return String(optionValue) === String(currentAnswer)
+    }
+
     const handleChange = (e) => {
       const value = isNaN(e.target.value) ? e.target.value : parseFloat(e.target.value)
-      emit('answer', value)
+      // 确保只有当值真正改变时才触发事件
+      if (value !== props.answer) {
+        emit('answer', value)
+      }
     }
 
     return {
+      isSelected,
       handleChange
     }
   }
