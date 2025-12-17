@@ -8,7 +8,7 @@
       <input
         type="radio"
         :name="`q${questionId}`"
-        :value="option.value || option.score || index"
+        :value="getOptionValue(option, index)"
         :checked="isSelected(option, index)"
         @change="handleChange"
       />
@@ -36,8 +36,15 @@ export default {
   },
   emits: ['answer'],
   setup(props, { emit }) {
+    // 获取选项的值，正确处理 0 值
+    const getOptionValue = (option, index) => {
+      if (option.value !== undefined) return option.value
+      if (option.score !== undefined) return option.score
+      return index
+    }
+
     const isSelected = (option, index) => {
-      const optionValue = option.value !== undefined ? option.value : (option.score !== undefined ? option.score : index)
+      const optionValue = getOptionValue(option, index)
       const currentAnswer = props.answer
       
       // 使用严格相等比较，确保类型一致
@@ -72,6 +79,7 @@ export default {
     }
 
     return {
+      getOptionValue,
       isSelected,
       handleChange
     }
